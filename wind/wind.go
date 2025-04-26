@@ -124,6 +124,11 @@ func CtrlS(hwnd win.HWND) {
 		fmt.Printf("ctrl + s出现错误：%v\n", err)
 	}
 	robotgo.MilliSleep(200)
+	//err = robotgo.KeyTap("s", "ctrl")
+	//
+	//if err != nil {
+	//	fmt.Printf("ctrl + s出现错误：%v\n", err)
+	//}
 }
 
 func SelectAllAndCtrlC(hwnd win.HWND) {

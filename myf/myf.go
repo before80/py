@@ -110,104 +110,10 @@ func ReplaceMarkdownFileContent(filePath string) (bool, error) {
 		pattern     *regexp.Regexp
 		replacement string
 	}{
-		{regexp.MustCompile(`title\s*?=\s*?"([a-zA-Z]+)"`), "title = \"<$1.h>\""},
-		{regexp.MustCompile("\n+```\n{2,}&zeroWidthSpace;"), "\n```\n\n&zeroWidthSpace;"},
-		{regexp.MustCompile("输出：\\s*?\n```\\s*?\n"), "输出：\n\n```txt\n"},
-		{regexp.MustCompile("```\\s*?//"), "```c\n//"},
-		{regexp.MustCompile("```\\s*?\n#include"), "```c\n#include"},
-		{regexp.MustCompile("```\\s*?\ntypedef"), "```c\ntypedef"},
-		{regexp.MustCompile("```\\s*?\nvoid"), "```c\nvoid"},
-		{regexp.MustCompile("```\\s*?\n#define"), "```c\n#define"},
-		{regexp.MustCompile("```\\s*?\nchar"), "```c\nchar"},
-		{regexp.MustCompile("```\\s*?\nint"), "```c\nint"},
-		{regexp.MustCompile("```\\s*?\nfloat"), "```c\nfloat"},
-		{regexp.MustCompile("```\\s*?\ndouble"), "```c\ndouble"},
-		{regexp.MustCompile("```\\s*?\nstruct"), "```c\nstruct"},
-		{regexp.MustCompile("```\\s*?\nunion"), "```c\nunion"},
-		{regexp.MustCompile("@!br /!@"), "<br />"},
-		{regexp.MustCompile("!@"), ">"},
-		{regexp.MustCompile("@!"), "<"},
-		{regexp.MustCompile("### 返回值"), "**返回值**"},
-		{regexp.MustCompile("### 注意"), "**注意**"},
-		{regexp.MustCompile("### 注解"), "**注解**"},
-		{regexp.MustCompile("### 示例"), "**示例**"},
-		{regexp.MustCompile("### 参数"), "**参数**"},
-		{regexp.MustCompile("### 引用"), "**引用**"},
-		{regexp.MustCompile("### 参阅"), "**参阅**"},
-		{regexp.MustCompile("### 错误处理"), "**错误处理**"},
-		{regexp.MustCompile("### 可能的实现"), "**可能的实现**"},
-		{regexp.MustCompile("### 缺陷报告"), "**缺陷报告**"},
-		{regexp.MustCompile("### 外部链接"), "**外部链接**"},
-		{regexp.MustCompile("### 展开"), "**展开**"},
-		{regexp.MustCompile("### 展开值"), "**展开值**"},
-		{regexp.MustCompile("### 复杂度"), "**复杂度**"},
-		{regexp.MustCompile("### 文件访问标记"), "**文件访问标记**"},
-		{regexp.MustCompile("- &zeroWidthSpace; "), "  - "},
+		{regexp.MustCompile("```\\s*?//"), "```python\n//"},
+		{regexp.MustCompile("```\\s*?>>>"), "```python\n>>>"},
+		{regexp.MustCompile("```\\s*?\ndef"), "```python\ndef"},
 		{regexp.MustCompile("&zeroWidthSpace;"), "​\t"},
-		{regexp.MustCompile(`### ([a-zA-Z_]+)\s*?\(C(\d+)\s*?起\)`), "### $1 <- $2+"},
-		{regexp.MustCompile(`### ([a-zA-Z_]+)\s*?<-\s*?\(C(\d+)\s*?起\)`), "### $1 <- $2+"},
-		{regexp.MustCompile(`### ([a-zA-Z_]+)\s*?<-\s*?(\d{2}\+)\s*?\(C(\d{2})\s*?移除\)`), "### $1 <- $2 $3 R"},
-		{regexp.MustCompile(`### ([a-zA-Z_]+)\s*?<-\s*?(\d{2}\+)\s*?\(C(\d{2})\s*?弃用\)`), "### $1 <- $2 $3 D"},
-		{regexp.MustCompile(`### ([a-zA-Z_]+)\s*?<-\s*?(\d{2}\+)\s*?\(C(\d{2})\s*?前\)`), "### $1 <- $2 $3 F"},
-		{regexp.MustCompile(`原址：([a-zA-Z0-9_:/?.#=&-]+)`), "原址：[$1]($1)"},
-		{regexp.MustCompile(`运行此代码`), ""},
-		{regexp.MustCompile("`\\*\\*A\\*\\*`"), "`A`"},
-		{regexp.MustCompile("`\\*\\*a\\*\\*`"), "`a`"},
-		{regexp.MustCompile("`\\*\\*c\\*\\*`"), "`c`"},
-		{regexp.MustCompile("`\\*\\*d\\*\\*`"), "`d`"},
-		{regexp.MustCompile("`\\*\\*F\\*\\*`"), "`F`"},
-		{regexp.MustCompile("`\\*\\*f\\*\\*`"), "`f`"},
-		{regexp.MustCompile("`\\*\\*E\\*\\*`"), "`E`"},
-		{regexp.MustCompile("`\\*\\*e\\*\\*`"), "`e`"},
-		{regexp.MustCompile("`\\*\\*G\\*\\*`"), "`G`"},
-		{regexp.MustCompile("`\\*\\*g\\*\\*`"), "`g`"},
-		{regexp.MustCompile("`\\*\\*i\\*\\*`"), "`i`"},
-		{regexp.MustCompile("`\\*\\*n\\*\\*`"), "`n`"},
-		{regexp.MustCompile("`\\*\\*P\\*\\*`"), "`P`"},
-		{regexp.MustCompile("`\\*\\*O\\*\\*`"), "`O`"},
-		{regexp.MustCompile("`\\*\\*o\\*\\*`"), "`o`"},
-		{regexp.MustCompile("`\\*\\*p\\*\\*`"), "`p`"},
-		{regexp.MustCompile("`\\*\\*s\\*\\*`"), "`s`"},
-		{regexp.MustCompile("`\\*\\*U\\*\\*`"), "`U`"},
-		{regexp.MustCompile("`\\*\\*u\\*\\*`"), "`u`"},
-		{regexp.MustCompile("`\\*\\*X\\*\\*`"), "`X`"},
-		{regexp.MustCompile("`\\*\\*x\\*\\*`"), "`x`"},
-		{regexp.MustCompile("`\\*\\*Z\\*\\*`"), "`Z`"},
-		{regexp.MustCompile("`\\*\\*z\\*\\*`"), "`z`"},
-		{regexp.MustCompile("`\\*\\*\\+\\*\\*`"), "`+`"},
-		{regexp.MustCompile("`\\*\\*-\\*\\*`"), "`-`"},
-		{regexp.MustCompile("`\\*\\*%\\*\\*`"), "`%`"},
-		{regexp.MustCompile("`\\*\\*\\*\\*\\*`"), "`*`"},
-		{regexp.MustCompile("`\\*\\*\\.\\*\\*`"), "`.`"},
-		{regexp.MustCompile("`\\*\\*#\\*\\*`"), "`#`"},
-		{regexp.MustCompile("`\\*\\*0\\*\\*`"), "`0`"},
-		{regexp.MustCompile("`\\*\\*0X\\*\\*`"), "`0X`"},
-		{regexp.MustCompile("`\\*\\*0x\\*\\*`"), "`0x`"},
-		{regexp.MustCompile("`\\*\\*%p\\*\\*`"), "`%p`"},
-		{regexp.MustCompile("`\\*\\*%d\\*\\*`"), "`%d`"},
-		{regexp.MustCompile("`\\*\\*%f\\*\\*`"), "`%f`"},
-		{regexp.MustCompile("`\\*\\*%%\\*\\*`"), "`%%`"},
-		{regexp.MustCompile(`'\*\*\\0\*\*'`), "'\\0'"},
-		{regexp.MustCompile("`'\\*\\*\\f\\*\\*'`"), "`'\\f'`"},
-		{regexp.MustCompile(`"\*\*\\f\*\*"`), "`\"\\f\"`"},
-		{regexp.MustCompile(`'\*\*\\f\*\*'`), "`'\\f'`"},
-		{regexp.MustCompile(`"\*\*\\n\*\*"`), "`\"\\n\"`"},
-		{regexp.MustCompile(`'\*\*\\n\*\*'`), "`'\\n'`"},
-		{regexp.MustCompile(`"\*\*\\r\*\*"`), "`\"\\r\"`"},
-		{regexp.MustCompile(`'\*\*\\r\*\*'`), "`'\\r'`"},
-		{regexp.MustCompile(`"\*\*\\t\*\*"`), "`\"\\t\"`"},
-		{regexp.MustCompile(`'\*\*\\t\*\*'`), "`'\\t'`"},
-		{regexp.MustCompile(`"\*\*\\v\*\*"`), "`\"\\v\"`"},
-		{regexp.MustCompile(`'\*\*\\v\*\*'`), "`'\\v'`"},
-		{regexp.MustCompile("`\\*\\*\\f\\*\\*`"), "`\\f`"},
-		{regexp.MustCompile("`\\*\\*\\n\\*\\*`"), "`\\n`"},
-		{regexp.MustCompile("`\\*\\*\\r\\*\\*`"), "`\\r`"},
-		{regexp.MustCompile("`\\*\\*\\t\\*\\*`"), "`\\t`"},
-		{regexp.MustCompile("`\\*\\*\\v\\*\\*`"), "`\\v`"},
-		{regexp.MustCompile("`\\*\\*INF\\*\\*`"), "`INF`"},
-		{regexp.MustCompile("`\\*\\*INFINITY\\*\\*`"), "`INFINITY`"},
-		{regexp.MustCompile("`\\*\\*NAN\\*\\*`"), "`NAN`"},
-		{regexp.MustCompile("\n+\\s*?```\n{6,}"), "\n```\n\n\n\n\n"},
 	}
 
 	modified := false
@@ -228,25 +134,11 @@ func ReplaceMarkdownFileContent(filePath string) (bool, error) {
 			return false, err
 		}
 		//fmt.Println("2")
-
 	}
 
-	// 按行判断是否有 ### 或 ## 开头的行，若有则替换这些行
+	//// 按行判断是否有 ### 或 ## 开头的行，若有则替换这些行
 	var totalLines []string
 	file, err := os.OpenFile(filePath, os.O_RDWR, 0666)
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		totalLines = append(totalLines, scanner.Text())
-	}
-
-	for i, line := range totalLines {
-		if strings.HasPrefix(line, "### ") {
-			totalLines[i] = strings.Replace(line, "### ", "", -1)
-		}
-		if strings.HasPrefix(line, "## ") {
-			totalLines[i] = strings.Replace(line, "## ", "", -1)
-		}
-	}
 	_ = file.Truncate(0)
 	_, _ = file.Seek(0, 0)
 

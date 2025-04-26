@@ -2,14 +2,14 @@ package js
 
 import _ "embed"
 
-//go:embed InIdentifierPageRemoveAndReplace.js
-var InIdentifierPageRemoveAndReplaceJs string
-
-//go:embed InSomeoneHeaderIntroPageGetAllIdentifierInfo.js
-var InSomeoneHeaderIntroPageGetAllIdentifierInfoJs string
-
-//go:embed InHeadersPageGetAllHeaderInfo.js
-var InHeadersPageGetAllHeaderInfoJs string
-
 //go:embed GetBarMenus.js
 var GetBarMenusJs string
+
+//go:embed GetBarMenuPageData.js
+var GetBarMenuPageDataJs string
+
+//go:embed GetSecondMenus.js
+var GetSecondMenusJs string
+
+//go:embed GetDetailPageData.js
+var GetDetailPageDataJs string
