@@ -16,3 +16,9 @@ var GetSecondMenusForHowtoJs string
 
 //go:embed GetDetailPageData.js
 var GetDetailPageDataJs string
+
+//go:embed GetThirdMenus.js
+var GetThirdMenusJs string
+
+//go:embed GetSecondMenuPageData.js
+var GetSecondMenuPageDataJs string
