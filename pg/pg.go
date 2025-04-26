@@ -296,6 +296,37 @@ func GetThirdLevelMenu(menuInfo MenuInfo, page *rod.Page) (thirdMenuInfos []Menu
 	return
 }
 
+func GetFourthLevelMenu(thirdMenuInfo MenuInfo, page *rod.Page) (fourthMenuInfos []MenuInfo, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("在第二级菜单%s中获取第三级菜单时遇到错误：%v", thirdMenuInfo.Url, r)
+		}
+	}()
+
+	page.MustNavigate(thirdMenuInfo.Url)
+	page.MustWaitLoad()
+
+	// 判断是否还有第三级菜单
+	var result *proto.RuntimeRemoteObject
+	result, err = page.Eval(js.GetFourthMenusJs)
+
+	if err != nil {
+		return nil, fmt.Errorf("在网页%s中执行GetFourthMenusJs遇到错误：%v", thirdMenuInfo.Url, err)
+	}
+	// 将结果序列化为 JSON 字节
+	jsonBytes, err := json.Marshal(result.Value)
+	if err != nil {
+		return nil, fmt.Errorf("在网页%s中执行json.Marshal遇到错误: %v", thirdMenuInfo.Url, err)
+	}
+
+	// 将 JSON 数据反序列化到结构体中
+	err = json.Unmarshal(jsonBytes, &fourthMenuInfos)
+	if err != nil {
+		return nil, fmt.Errorf("在网页%s中执行json.Unmarshal遇到错误: %v", thirdMenuInfo.Url, err)
+	}
+	return
+}
+
 func InitSecondIndexMdFile(index int, barMenuInfo BarMenuInfo, secondMenuInfo MenuInfo) (err error) {
 	// 保证目录已经存在
 	folderDir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename)
@@ -440,7 +471,7 @@ draft = false
 func InsertDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, menuInfo MenuInfo, page *rod.Page) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("初始化detailPage=%s时遇到错误：%v", menuInfo.Url, r)
+			err = fmt.Errorf("插入detailPage=%s数据时遇到错误：%v", menuInfo.Url, r)
 		}
 	}()
 	page.MustNavigate(menuInfo.Url)
@@ -494,6 +525,50 @@ func InsertDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, menuInf
 	return
 }
 
+func InitThirdIndexMdFile(index int, barMenuInfo BarMenuInfo, secondMenuInfo MenuInfo, thirdMenuInfo MenuInfo) (err error) {
+	// 保证目录已经存在
+	folderDir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename, thirdMenuInfo.Filename)
+	err = os.MkdirAll(folderDir, 0777)
+	if err != nil {
+		return fmt.Errorf("无法创建%s目录：%v\n", folderDir, err)
+	}
+
+	indexMdFp := filepath.Join(folderDir, "_index.md")
+	var indexMdF *os.File
+	_, err1 := os.Stat(indexMdFp)
+
+	// 当文件不存在的情况下，新建文件并初始化该文件
+	if err1 != nil && errors.Is(err1, fs.ErrNotExist) {
+		//fmt.Println("err=", err1)
+		indexMdF, err = os.OpenFile(indexMdFp, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			return fmt.Errorf("创建文件 %s 时出错: %w", indexMdFp, err)
+		}
+		defer indexMdF.Close()
+		date := time.Now().Format(time.RFC3339)
+		_, err = indexMdF.WriteString(fmt.Sprintf(`+++
+title = "%s"
+date = %s
+weight = %d
+type="docs"
+description = "%s"
+isCJKLanguage = true
+draft = false
+
++++
+
+> 原文：[%s](%s)
+>
+> 收录时间：%s
+`, thirdMenuInfo.MenuName, date, index*10, "", thirdMenuInfo.Url, thirdMenuInfo.Url, fmt.Sprintf("`%s`", date)))
+
+		if err != nil {
+			return fmt.Errorf("初始化%s文件时出错: %v", indexMdFp, err)
+		}
+	}
+	return nil
+}
+
 func InitThirdDetailPageMdFile(index int, barMenuInfo BarMenuInfo, secondMenuInfo MenuInfo, thirdMenuInfo MenuInfo) (err error) {
 	// 保证目录已经存在
 	folderDir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename)
@@ -541,7 +616,7 @@ draft = false
 func InsertThirdDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, secondMenuInfo MenuInfo, thirdMenuInfo MenuInfo, page *rod.Page) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("初始化detailPage=%s时遇到错误：%v", secondMenuInfo.Url, r)
+			err = fmt.Errorf("插入thirdDetailPage=%s数据时遇到错误：%v", thirdMenuInfo.Url, r)
 		}
 	}()
 	page.MustNavigate(thirdMenuInfo.Url)
@@ -590,7 +665,159 @@ func InsertThirdDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, se
 	if err != nil {
 		return fmt.Errorf("在处理thirdDetailPage=%s时，替换出现错误：%v", thirdMenuInfo.Url, err)
 	}
-	mdFp := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, thirdMenuInfo.Filename+".md")
+	mdFp := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename, thirdMenuInfo.Filename+".md")
+	err = insertAnyPageData(uniqueMdFilepath, mdFp)
+	return
+}
+
+func InsertThirdMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, secondMenuInfo MenuInfo, thirdMenuInfo MenuInfo, page *rod.Page) (err error) {
+	_, err = page.Eval(fmt.Sprintf(`() => { %s }`, js.GetThirdMenuPageDataJs))
+	if err != nil {
+		return fmt.Errorf("在网页%s中执行GetThirdMenuPageDataJs遇到错误：%v", thirdMenuInfo.Url, err)
+	}
+
+	uniqueMdFilepath := cfg.Default.UniqueMdFilepath
+	// 获取文件名
+	spSlice := strings.Split(uniqueMdFilepath, "\\")
+	mdFilename := spSlice[len(spSlice)-1]
+
+	// 清空唯一共用的markdown文件的文件内容
+	err = myf.TruncFileContent(uniqueMdFilepath)
+	if err != nil {
+		return fmt.Errorf("在处理third=%s时，清空%q文件内容出现错误：%v", thirdMenuInfo.Url, uniqueMdFilepath, err)
+	}
+
+	// 打开 唯一共用的markdown文件
+	err = wind.OpenTypora(uniqueMdFilepath)
+	if err != nil {
+		return fmt.Errorf("在处理third=%s时，打开窗口名为%q时出现错误：%v", thirdMenuInfo.Url, uniqueMdFilepath, err)
+	}
+
+	// 适当延时保证能打开 typora
+	time.Sleep(3 * time.Second)
+
+	var typoraHwnd win.HWND
+	typoraWindowName := fmt.Sprintf("%s - Typora", mdFilename)
+	typoraHwnd, err = wind.FindWindowHwndByWindowTitle(typoraWindowName)
+	if err != nil {
+		return fmt.Errorf("在处理third=%s时，找不到%q窗口：%v", thirdMenuInfo.Url, typoraWindowName, err)
+	}
+
+	wind.SelectAllAndCtrlC(browserHwnd)
+	wind.SelectAllAndDelete(typoraHwnd)
+	wind.CtrlV(typoraHwnd)
+
+	wind.CtrlS(typoraHwnd)
+	time.Sleep(1 * time.Second)
+	robotgo.CloseWindow()
+	time.Sleep(2 * time.Second)
+	_, err = myf.ReplaceMarkdownFileContent(uniqueMdFilepath)
+	if err != nil {
+		return fmt.Errorf("在处理third=%s时，替换出现错误：%v", thirdMenuInfo.Url, err)
+	}
+
+	indexMdFp := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename, thirdMenuInfo.Filename, "_index.md")
+	err = insertAnyPageData(uniqueMdFilepath, indexMdFp)
+	return
+}
+
+func InitFourthDetailPageMdFile(index int, barMenuInfo BarMenuInfo, secondMenuInfo MenuInfo, thirdMenuInfo MenuInfo, fourthMenuInfo MenuInfo) (err error) {
+	// 保证目录已经存在
+	folderDir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename, thirdMenuInfo.Filename)
+	err = os.MkdirAll(folderDir, 0777)
+	if err != nil {
+		return fmt.Errorf("无法创建%s目录：%v\n", folderDir, err)
+	}
+
+	mdFp := filepath.Join(folderDir, fourthMenuInfo.Filename+".md")
+	var mdF *os.File
+	_, err1 := os.Stat(mdFp)
+
+	// 当文件不存在的情况下，新建文件并初始化该文件
+	if err1 != nil && errors.Is(err1, fs.ErrNotExist) {
+		//fmt.Println("err=", err1)
+		mdF, err = os.OpenFile(mdFp, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			return fmt.Errorf("创建文件 %s 时出错: %w", mdFp, err)
+		}
+		defer mdF.Close()
+		date := time.Now().Format(time.RFC3339)
+		_, err = mdF.WriteString(fmt.Sprintf(`+++
+title = "%s"
+date = %s
+weight = %d
+type="docs"
+description = "%s"
+isCJKLanguage = true
+draft = false
+
++++
+
+> 原文：[%s](%s)
+>
+> 收录时间：%s
+`, fourthMenuInfo.MenuName, date, index*10, "", fourthMenuInfo.Url, fourthMenuInfo.Url, fmt.Sprintf("`%s`", date)))
+
+		if err != nil {
+			return fmt.Errorf("初始化%s文件时出错: %v", mdFp, err)
+		}
+	}
+	return nil
+}
+
+func InsertFourthDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, secondMenuInfo MenuInfo, thirdMenuInfo MenuInfo, fourthMenuInfo MenuInfo, page *rod.Page) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("插入fourthDetailPage=%s数据时遇到错误：%v", fourthMenuInfo.Url, r)
+		}
+	}()
+	page.MustNavigate(fourthMenuInfo.Url)
+	page.MustWaitLoad()
+
+	_, err = page.Eval(fmt.Sprintf(`() => { %s }`, js.GetDetailPageDataJs))
+	if err != nil {
+		return fmt.Errorf("在网页%s中执行GetDetailPageDataJs遇到错误：%v", fourthMenuInfo.Url, err)
+	}
+
+	uniqueMdFilepath := cfg.Default.UniqueMdFilepath
+	// 获取文件名
+	spSlice := strings.Split(uniqueMdFilepath, "\\")
+	mdFilename := spSlice[len(spSlice)-1]
+
+	// 清空唯一共用的markdown文件的文件内容
+	err = myf.TruncFileContent(uniqueMdFilepath)
+	if err != nil {
+		return fmt.Errorf("在处理fourthDetailPage=%s时，清空%q文件内容出现错误：%v", fourthMenuInfo.Url, uniqueMdFilepath, err)
+	}
+
+	// 打开 唯一共用的markdown文件
+	err = wind.OpenTypora(uniqueMdFilepath)
+	if err != nil {
+		return fmt.Errorf("在处理fourthDetailPage=%s时，打开窗口名为%q时出现错误：%v", fourthMenuInfo.Url, uniqueMdFilepath, err)
+	}
+
+	// 适当延时保证能打开 typora
+	time.Sleep(3 * time.Second)
+
+	var typoraHwnd win.HWND
+	typoraWindowName := fmt.Sprintf("%s - Typora", mdFilename)
+	typoraHwnd, err = wind.FindWindowHwndByWindowTitle(typoraWindowName)
+	if err != nil {
+		return fmt.Errorf("在处理fourthDetailPage=%s时，找不到%q窗口：%v", fourthMenuInfo.Url, typoraWindowName, err)
+	}
+
+	wind.SelectAllAndCtrlC(browserHwnd)
+	wind.SelectAllAndDelete(typoraHwnd)
+	wind.CtrlV(typoraHwnd)
+
+	wind.CtrlS(typoraHwnd)
+	robotgo.CloseWindow()
+	time.Sleep(1 * time.Second)
+	_, err = myf.ReplaceMarkdownFileContent(uniqueMdFilepath)
+	if err != nil {
+		return fmt.Errorf("在处理fourthDetailPage=%s时，替换出现错误：%v", fourthMenuInfo.Url, err)
+	}
+	mdFp := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename, thirdMenuInfo.Filename, fourthMenuInfo.Filename+".md")
 	err = insertAnyPageData(uniqueMdFilepath, mdFp)
 	return
 }

@@ -8,6 +8,7 @@ import (
 	"py/bs"
 	"py/lg"
 	"py/pg"
+	"slices"
 	"strconv"
 )
 
@@ -35,7 +36,11 @@ func main() {
 
 	var secondMenuInfos []pg.MenuInfo
 	var thirdMenuInfos []pg.MenuInfo
+	var fourthMenuInfos []pg.MenuInfo
 	for i, barMenuInfo := range barMenuInfos {
+		if slices.Contains([]string{"tutorial", "whatsnew_3_13"}, barMenuInfo.Filename) {
+			continue
+		}
 		lg.InfoToFileAndStdOut(fmt.Sprintf("bar正要处理 -> file=%s, menu=%s\n", barMenuInfo.Filename, barMenuInfo.MenuName))
 		err = pg.InitIndexMdFile(i, barMenuInfo)
 		if err != nil {
@@ -74,7 +79,7 @@ func main() {
 					lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
 					return
 				}
-				lg.InfoToFileAndStdOut(fmt.Sprintf("second初始化完成 -> file=%s, menu=%s secondfile=%s secondmenu=%s\n",
+				lg.InfoToFileAndStdOut(fmt.Sprintf("second初始化完成1 -> file=%s, menu=%s secondfile=%s secondmenu=%s\n",
 					barMenuInfo.Filename, barMenuInfo.MenuName,
 					secondMenuInfo.Filename, secondMenuInfo.MenuName))
 
@@ -84,30 +89,92 @@ func main() {
 					return
 				}
 
-				lg.InfoToFileAndStdOut(fmt.Sprintf("second插入数据完成 -> file=%s, menu=%s secondfile=%s secondmenu=%s\n",
+				lg.InfoToFileAndStdOut(fmt.Sprintf("second插入数据完成1 -> file=%s, menu=%s secondfile=%s secondmenu=%s\n",
 					barMenuInfo.Filename, barMenuInfo.MenuName,
 					secondMenuInfo.Filename, secondMenuInfo.MenuName))
 
 				for k, thirdMenuInfo := range thirdMenuInfos {
-					err = pg.InitThirdDetailPageMdFile(k, barMenuInfo, secondMenuInfo, thirdMenuInfo)
+					fourthMenuInfos, err = pg.GetFourthLevelMenu(thirdMenuInfo, page)
 					if err != nil {
 						lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
 						return
 					}
-					lg.InfoToFileAndStdOut(fmt.Sprintf("third初始化完成 -> file=%s, menu=%s secondfile=%s secondmenu=%s thirdfile=%s secondmenu=%s\n",
+					lg.InfoToFileAndStdOut(fmt.Sprintf("third获取第四级菜单完成 -> file=%s, menu=%s secondfile=%s secondmenu=%s thirdfile=%s thirdmenu=%s\n",
 						barMenuInfo.Filename, barMenuInfo.MenuName,
 						secondMenuInfo.Filename, secondMenuInfo.MenuName,
-						thirdMenuInfo.Filename, thirdMenuInfo.MenuName))
+						thirdMenuInfo.Filename, thirdMenuInfo.MenuName,
+					))
 
-					err = pg.InsertThirdDetailPageData(browserHwnd, barMenuInfo, secondMenuInfo, thirdMenuInfo, page)
-					if err != nil {
-						lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
-						return
+					//存在第四级菜单的情况
+					if len(fourthMenuInfos) > 0 {
+						err = pg.InitThirdIndexMdFile(k, barMenuInfo, secondMenuInfo, thirdMenuInfo)
+						if err != nil {
+							lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
+							return
+						}
+						lg.InfoToFileAndStdOut(fmt.Sprintf("third初始化完成1 -> file=%s, menu=%s secondfile=%s secondmenu=%s thirdfile=%s thirdmenu=%s\n",
+							barMenuInfo.Filename, barMenuInfo.MenuName,
+							secondMenuInfo.Filename, secondMenuInfo.MenuName,
+							thirdMenuInfo.Filename, thirdMenuInfo.MenuName))
+
+						err = pg.InsertThirdMenuPageData(browserHwnd, barMenuInfo, secondMenuInfo, thirdMenuInfo, page)
+						if err != nil {
+							lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
+							return
+						}
+
+						lg.InfoToFileAndStdOut(fmt.Sprintf("third插入数据完成1 -> file=%s, menu=%s secondfile=%s secondmenu=%s thirdfile=%s thirdmenu=%s\n",
+							barMenuInfo.Filename, barMenuInfo.MenuName,
+							secondMenuInfo.Filename, secondMenuInfo.MenuName,
+							thirdMenuInfo.Filename, thirdMenuInfo.MenuName))
+
+						for l, fourthMenuInfo := range fourthMenuInfos {
+							err = pg.InitFourthDetailPageMdFile(l, barMenuInfo, secondMenuInfo, thirdMenuInfo, fourthMenuInfo)
+							if err != nil {
+								lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
+								return
+							}
+							lg.InfoToFileAndStdOut(fmt.Sprintf("fourth初始化完成1 -> file=%s, menu=%s secondfile=%s secondmenu=%s thirdfile=%s thirdmenu=%s fourthfile=%s fourthmenu=%s\n",
+								barMenuInfo.Filename, barMenuInfo.MenuName,
+								secondMenuInfo.Filename, secondMenuInfo.MenuName,
+								thirdMenuInfo.Filename, thirdMenuInfo.MenuName,
+								fourthMenuInfo.Filename, fourthMenuInfo.MenuName,
+							))
+
+							err = pg.InsertFourthDetailPageData(browserHwnd, barMenuInfo, secondMenuInfo, thirdMenuInfo, fourthMenuInfo, page)
+							if err != nil {
+								lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
+								return
+							}
+							lg.InfoToFileAndStdOut(fmt.Sprintf("fourth插入数据完成1 -> file=%s, menu=%s secondfile=%s secondmenu=%s thirdfile=%s thirdmenu=%s fourthfile=%s fourthmenu=%s\n",
+								barMenuInfo.Filename, barMenuInfo.MenuName,
+								secondMenuInfo.Filename, secondMenuInfo.MenuName,
+								thirdMenuInfo.Filename, thirdMenuInfo.MenuName,
+								fourthMenuInfo.Filename, fourthMenuInfo.MenuName,
+							))
+						}
+					} else {
+						//不存在第四级菜单的情况
+						err = pg.InitThirdDetailPageMdFile(k, barMenuInfo, secondMenuInfo, thirdMenuInfo)
+						if err != nil {
+							lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
+							return
+						}
+						lg.InfoToFileAndStdOut(fmt.Sprintf("third初始化完成2 -> file=%s, menu=%s secondfile=%s secondmenu=%s thirdfile=%s thirdmenu=%s\n",
+							barMenuInfo.Filename, barMenuInfo.MenuName,
+							secondMenuInfo.Filename, secondMenuInfo.MenuName,
+							thirdMenuInfo.Filename, thirdMenuInfo.MenuName))
+
+						err = pg.InsertThirdDetailPageData(browserHwnd, barMenuInfo, secondMenuInfo, thirdMenuInfo, page)
+						if err != nil {
+							lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
+							return
+						}
+						lg.InfoToFileAndStdOut(fmt.Sprintf("third插入数据完成 -> file=%s, menu=%s secondfile=%s secondmenu=%s thirdfile=%s thirdmenu=%s\n",
+							barMenuInfo.Filename, barMenuInfo.MenuName,
+							secondMenuInfo.Filename, secondMenuInfo.MenuName,
+							thirdMenuInfo.Filename, thirdMenuInfo.MenuName))
 					}
-					lg.InfoToFileAndStdOut(fmt.Sprintf("third插入数据完成 -> file=%s, menu=%s secondfile=%s secondmenu=%s thirdfile=%s secondmenu=%s\n",
-						barMenuInfo.Filename, barMenuInfo.MenuName,
-						secondMenuInfo.Filename, secondMenuInfo.MenuName,
-						thirdMenuInfo.Filename, thirdMenuInfo.MenuName))
 				}
 			} else {
 				// 不存在第三级菜单的情况
@@ -116,7 +183,7 @@ func main() {
 					lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
 					return
 				}
-				lg.InfoToFileAndStdOut(fmt.Sprintf("second初始化完成 -> file=%s, menu=%s secondfile=%s secondmenu=%s\n",
+				lg.InfoToFileAndStdOut(fmt.Sprintf("second初始化完成2 -> file=%s, menu=%s secondfile=%s secondmenu=%s\n",
 					barMenuInfo.Filename, barMenuInfo.MenuName,
 					secondMenuInfo.Filename, secondMenuInfo.MenuName))
 
@@ -125,7 +192,7 @@ func main() {
 					lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
 					return
 				}
-				lg.InfoToFileAndStdOut(fmt.Sprintf("second插入数据完成 -> file=%s, menu=%s secondfile=%s secondmenu=%s\n",
+				lg.InfoToFileAndStdOut(fmt.Sprintf("second插入数据完成2 -> file=%s, menu=%s secondfile=%s secondmenu=%s\n",
 					barMenuInfo.Filename, barMenuInfo.MenuName,
 					secondMenuInfo.Filename, secondMenuInfo.MenuName))
 			}
