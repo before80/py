@@ -1,7 +1,6 @@
 package myf
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -134,25 +133,6 @@ func ReplaceMarkdownFileContent(filePath string) (bool, error) {
 			return false, err
 		}
 		//fmt.Println("2")
-	}
-
-	//// 按行判断是否有 ### 或 ## 开头的行，若有则替换这些行
-	var totalLines []string
-	file, err := os.OpenFile(filePath, os.O_RDWR, 0666)
-	_ = file.Truncate(0)
-	_, _ = file.Seek(0, 0)
-
-	writer := bufio.NewWriter(file)
-	for _, line := range totalLines {
-		_, err = writer.WriteString(line + "\n")
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	err = writer.Flush()
-	if err != nil {
-		panic(err)
 	}
 
 	return modified, nil

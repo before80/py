@@ -64,47 +64,12 @@ type MenuInfo struct {
 	Url      string `json:"url"`
 }
 
-// InitBarMenu 初始化横栏菜单（包括在没有_index.md时创建一个，以及将页面数据写入_index.md中）
-func InitBarMenu(browserHwnd win.HWND, index int, barMenuInfo BarMenuInfo, page *rod.Page) (secondMenus []MenuInfo, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("初始化barmenu=%s时遇到错误：%v", barMenuInfo.Url, r)
-		}
-	}()
-
-	page.MustNavigate(barMenuInfo.Url)
-	page.MustWaitLoad()
-
-	_, err = page.Eval(fmt.Sprintf(`() => { %s }`, js.GetBarMenuPageDataJs))
-	if err != nil {
-		return nil, fmt.Errorf("在网页%s中执行GetBarMenuPageDataJs遇到错误：%v", barMenuInfo.Url, err)
-
-	}
-
-	// 判断是否还有第二级菜单
-	var result *proto.RuntimeRemoteObject
-	result, err = page.Eval(js.GetSecondMenusJs)
-	if err != nil {
-		return nil, fmt.Errorf("在网页%s中执行GetSecondMenusJs遇到错误：%v", barMenuInfo.Url, err)
-	}
-
-	// 将结果序列化为 JSON 字节
-	jsonBytes, err := json.Marshal(result.Value)
-	if err != nil {
-		return nil, fmt.Errorf("在网页%s中执行json.Marshal遇到错误: %v", barMenuInfo.Url, err)
-	}
-
-	// 将 JSON 数据反序列化到结构体中
-	err = json.Unmarshal(jsonBytes, &secondMenus)
-	if err != nil {
-		return nil, fmt.Errorf("在网页%s中执行json.Unmarshal遇到错误: %v", barMenuInfo.Url, err)
-	}
-
+func InitIndexMdFile(index int, barMenuInfo BarMenuInfo) (err error) {
 	// 保证目录已经存在
 	folderDir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename)
 	err = os.MkdirAll(folderDir, 0777)
 	if err != nil {
-		return nil, fmt.Errorf("无法创建%s目录：%v\n", folderDir, err)
+		return fmt.Errorf("无法创建%s目录：%v\n", folderDir, err)
 	}
 
 	indexMdFp := filepath.Join(folderDir, "_index.md")
@@ -116,7 +81,7 @@ func InitBarMenu(browserHwnd win.HWND, index int, barMenuInfo BarMenuInfo, page 
 		//fmt.Println("err=", err1)
 		indexMdF, err = os.OpenFile(indexMdFp, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 		if err != nil {
-			return nil, fmt.Errorf("创建文件 %s 时出错: %w", indexMdFp, err)
+			return fmt.Errorf("创建文件 %s 时出错: %w", indexMdFp, err)
 		}
 		defer indexMdF.Close()
 		date := time.Now().Format(time.RFC3339)
@@ -138,8 +103,51 @@ draft = false
 `, barMenuInfo.MenuName, barMenuInfo.MenuName, date, "", index*10, barMenuInfo.Url, barMenuInfo.Url, fmt.Sprintf("`%s`", date)))
 
 		if err != nil {
-			return nil, fmt.Errorf("初始化%s文件时出错: %v", indexMdFp, err)
+			return fmt.Errorf("初始化%s文件时出错: %v", indexMdFp, err)
 		}
+	}
+	return nil
+}
+
+// InsertBarMenuPageData 插入横栏菜单的页面数据
+func InsertBarMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, page *rod.Page) (secondMenus []MenuInfo, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("初始化barmenu=%s时遇到错误：%v", barMenuInfo.Url, r)
+		}
+	}()
+
+	page.MustNavigate(barMenuInfo.Url)
+	page.MustWaitLoad()
+
+	// 判断是否还有第二级菜单
+	var result *proto.RuntimeRemoteObject
+
+	if barMenuInfo.Filename == "howto" {
+		result, err = page.Eval(js.GetSecondMenusForHowtoJs)
+	} else {
+		result, err = page.Eval(js.GetSecondMenusJs)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("在网页%s中执行GetSecondMenusJs遇到错误：%v", barMenuInfo.Url, err)
+	}
+
+	// 将结果序列化为 JSON 字节
+	jsonBytes, err := json.Marshal(result.Value)
+	if err != nil {
+		return nil, fmt.Errorf("在网页%s中执行json.Marshal遇到错误: %v", barMenuInfo.Url, err)
+	}
+
+	// 将 JSON 数据反序列化到结构体中
+	err = json.Unmarshal(jsonBytes, &secondMenus)
+	if err != nil {
+		return nil, fmt.Errorf("在网页%s中执行json.Unmarshal遇到错误: %v", barMenuInfo.Url, err)
+	}
+
+	_, err = page.Eval(fmt.Sprintf(`() => { %s }`, js.GetBarMenuPageDataJs))
+	if err != nil {
+		return nil, fmt.Errorf("在网页%s中执行GetBarMenuPageDataJs遇到错误：%v", barMenuInfo.Url, err)
 	}
 
 	uniqueMdFilepath := cfg.Default.UniqueMdFilepath
@@ -174,13 +182,15 @@ draft = false
 	wind.CtrlV(typoraHwnd)
 
 	wind.CtrlS(typoraHwnd)
-	robotgo.CloseWindow()
 	time.Sleep(1 * time.Second)
+	robotgo.CloseWindow()
+	time.Sleep(2 * time.Second)
 	_, err = myf.ReplaceMarkdownFileContent(uniqueMdFilepath)
 	if err != nil {
 		return nil, fmt.Errorf("在处理barmenu=%s时，替换出现错误：%v", barMenuInfo.Url, err)
 	}
 
+	indexMdFp := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, "_index.md")
 	err = insertAnyPageData(uniqueMdFilepath, indexMdFp)
 	return
 }
@@ -255,20 +265,8 @@ func findShouLuStart(lines []string, shouLu string) (start int, err error) {
 	return 0, fmt.Errorf("未找到%q所在行", shouLu)
 }
 
-func InitDetailPage(browserHwnd win.HWND, index int, barMenuInfo BarMenuInfo, menuInfo MenuInfo, page *rod.Page) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("初始化detailPage=%s时遇到错误：%v", menuInfo.Url, r)
-		}
-	}()
-	page.MustNavigate(menuInfo.Url)
-	page.MustWaitLoad()
-
-	_, err = page.Eval(fmt.Sprintf(`() => { %s }`, js.GetDetailPageDataJs))
-	if err != nil {
-		return fmt.Errorf("在网页%s中执行GetDetailPageDataJs遇到错误：%v", menuInfo.Url, err)
-	}
-
+// InitDetailPageMdFile 初始化具体页面
+func InitDetailPageMdFile(index int, barMenuInfo BarMenuInfo, menuInfo MenuInfo) (err error) {
 	// 保证目录已经存在
 	folderDir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename)
 	err = os.MkdirAll(folderDir, 0777)
@@ -289,10 +287,10 @@ func InitDetailPage(browserHwnd win.HWND, index int, barMenuInfo BarMenuInfo, me
 		}
 		defer mdF.Close()
 		date := time.Now().Format(time.RFC3339)
-		_, err = mdF.WriteString(fmt.Sprintf(`
-+++
+		_, err = mdF.WriteString(fmt.Sprintf(`+++
 title = "%s"
 date = %s
+weight = %d
 type="docs"
 description = "%s"
 isCJKLanguage = true
@@ -303,11 +301,28 @@ draft = false
 > 原文：[%s](%s)
 >
 > 收录时间：%s
-`, menuInfo.MenuName, date, "", index*10, menuInfo.Url, menuInfo.Url, fmt.Sprintf("`%s`", date)))
+`, menuInfo.MenuName, date, index*10, "", menuInfo.Url, menuInfo.Url, fmt.Sprintf("`%s`", date)))
 
 		if err != nil {
 			return fmt.Errorf("初始化%s文件时出错: %v", mdFp, err)
 		}
+	}
+	return nil
+}
+
+// InsertDetailPageData 插入具体页面数据
+func InsertDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, menuInfo MenuInfo, page *rod.Page) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("初始化detailPage=%s时遇到错误：%v", menuInfo.Url, r)
+		}
+	}()
+	page.MustNavigate(menuInfo.Url)
+	page.MustWaitLoad()
+
+	_, err = page.Eval(fmt.Sprintf(`() => { %s }`, js.GetDetailPageDataJs))
+	if err != nil {
+		return fmt.Errorf("在网页%s中执行GetDetailPageDataJs遇到错误：%v", menuInfo.Url, err)
 	}
 
 	uniqueMdFilepath := cfg.Default.UniqueMdFilepath
@@ -348,8 +363,7 @@ draft = false
 	if err != nil {
 		return fmt.Errorf("在处理detailPage=%s时，替换出现错误：%v", barMenuInfo.Url, err)
 	}
-
+	mdFp := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, menuInfo.Filename+".md")
 	err = insertAnyPageData(uniqueMdFilepath, mdFp)
 	return
-
 }

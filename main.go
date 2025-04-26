@@ -36,7 +36,13 @@ func main() {
 
 	var secondMenuInfos []pg.MenuInfo
 	for i, barMenuInfo := range barMenuInfos {
-		secondMenuInfos, err = pg.InitBarMenu(browserHwnd, i, barMenuInfo, page)
+		err = pg.InitIndexMdFile(i, barMenuInfo)
+		if err != nil {
+			lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
+			return
+		}
+
+		secondMenuInfos, err = pg.InsertBarMenuPageData(browserHwnd, barMenuInfo, page)
 		if err != nil {
 			lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
 			return
@@ -47,7 +53,13 @@ func main() {
 		}
 
 		for j, menuInfo := range secondMenuInfos {
-			err = pg.InitDetailPage(browserHwnd, j, barMenuInfo, menuInfo, page)
+			err = pg.InitDetailPageMdFile(j, barMenuInfo, menuInfo)
+			if err != nil {
+				lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
+				return
+			}
+
+			err = pg.InsertDetailPageData(browserHwnd, barMenuInfo, menuInfo, page)
 			lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)
 			return
 		}
