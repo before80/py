@@ -562,3 +562,118 @@ func insertIdentifierData(idInfo IdInfo, fpSrc, fpDst string) (err error) {
 
 	return nil
 }
+
+type BarMenuInfo struct {
+	MenuName string `json:"menu_name"`
+	Filename string `json:"filename"`
+	Url      string `json:"url"`
+}
+
+func GetBarMenus(page *rod.Page, url string) (barMenuInfos []BarMenuInfo, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("获取barmenu时遇到错误：%v", r)
+		}
+	}()
+	// https://docs.python.org/zh-cn/3.13/index.html
+	page.MustNavigate(url)
+	page.MustWaitLoad()
+
+	var result *proto.RuntimeRemoteObject
+	result, err = page.Eval(fmt.Sprintf(js.GetBarMenusJs, url))
+	if err != nil {
+		return nil, fmt.Errorf("在网页%s中执行GetBarMenusJs遇到错误：%v", url, err)
+	}
+
+	// 将结果序列化为 JSON 字节
+	jsonBytes, err := json.Marshal(result.Value)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal result: %v", err)
+	}
+
+	// 将 JSON 数据反序列化到结构体中
+	err = json.Unmarshal(jsonBytes, &barMenuInfos)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal result: %v", err)
+	}
+
+	return
+}
+
+type MenuInfo struct {
+	MenuName string `json:"menu_name"`
+	Filename string `json:"filename"`
+	Url      string `json:"url"`
+}
+
+func InitBarMenu(barMenuInfo BarMenuInfo, page *rod.Page) (secondMenus []MenuInfo, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("初始化barmenu时遇到错误：%v", r)
+		}
+	}()
+
+	page.MustNavigate(barMenuInfo.Url)
+	page.MustWaitLoad()
+
+	// 判断是否还有第二级菜单
+	page.Eval(``)
+
+	folderDir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename)
+	err = os.MkdirAll(folderDir, 0777)
+	if err != nil {
+		return nil, fmt.Errorf("无法创建%s目录：%v\n", folderDir, err)
+	}
+
+	indexMdFp := filepath.Join(folderDir, "_index.md")
+	var indexMdF *os.File
+	_, err1 := os.Stat(indexMdFp)
+	// 当文件不存在的情况下，新建文件并初始化该文件
+	if err1 != nil && errors.Is(err1, fs.ErrNotExist) {
+		//fmt.Println("err=", err1)
+		indexMdF, err = os.OpenFile(indexMdFp, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			return nil, fmt.Errorf("创建文件 %s 时出错: %w", indexMdFp, err)
+		}
+		defer indexMdF.Close()
+		_, err = indexMdF.WriteString(fmt.Sprintf(`
++++
+title = "%s"
+linkTitle = "%s"
+date = %s
+type="docs"
+description = "%s"
+isCJKLanguage = true
+draft = false
+[menu.main]
+	weight = %d
++++
+
+## 类型
+
+
+
+
+## 枚举
+
+
+
+
+## 宏
+
+
+
+
+## 函数
+
+
+
+
+`, h1Content, time.Now().Format(time.RFC3339), index*10, hInfo.Desc))
+		if err != nil {
+			return fmt.Errorf("写入%s文件时出错: %v", indexMdFp, err)
+		}
+	}
+
+	return
+}

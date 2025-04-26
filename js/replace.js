@@ -137,22 +137,8 @@ function replaceDlPy() {
             }
         }
 
-        // 处理dl下的dd
-        // 处理 dl 下的 dd
-        const dd = dl.querySelector("dd");
-        if (dd) {
-            const divForDd = document.createElement("div");
-            // 将 dd 的子节点移动到新的 div 容器中
-            while (dd.firstChild) {
-                divForDd.appendChild(dd.firstChild);
-            }
-            // 将新的 div 容器插入到 dl 后面
-            dl.insertAdjacentElement("afterend", divForDd);
-        }
-
-        // 处理dl下的dt
-        // let divForDtArr = []
         const fragment = document.createDocumentFragment();
+        // 处理dl下的dt
         const dts = dl.querySelectorAll("dt")
         dts.forEach(dt => {
             const divForDt = document.createElement("div")
@@ -170,16 +156,52 @@ function replaceDlPy() {
             newH.textContent = `\`${title}\`` + (anchor ? `{#${anchor}}` : "");
             divForDt.appendChild(newH)
             fragment.appendChild(divForDt);
-            // divForDtArr.push(divForDt)
         })
+
+        // 处理dl下的dd
+        // 处理 dl 下的 dd
+        const dd = dl.querySelector("dd");
+        if (dd) {
+            const divForDd = document.createElement("div");
+            // 将 dd 的子节点移动到新的 div 容器中
+            while (dd.firstChild) {
+                divForDd.appendChild(dd.firstChild);
+            }
+            fragment.appendChild(divForDd);
+        }
 
         while (fragment.lastChild) {
             dl.insertAdjacentElement('afterend', fragment.lastChild);
         }
-        // dl.insertAdjacentElement("afterend", fragment)
-        // for(let i = divForDtArr.length - 1; i > 0; i--) {
-        //     dl.insertAdjacentElement("afterend", divForDtArr[i])
-        // }
+        dl.remove()
+    })
+}
+
+// 替换 dl.field-list.simple 中的内容
+function replaceDlFieldList() {
+    document.querySelectorAll('dl.field-list.simple').forEach(dl => {
+        const blockquote = document.createElement('blockquote')
+        const dt = dl.querySelector('dt')
+        if (dt) {
+            const divForDt = document.createElement('div')
+            while (dt.firstChild) {
+                divForDt.appendChild(dt.firstChild);
+            }
+            blockquote.appendChild(divForDt)
+        }
+
+        const dds = dl.querySelectorAll('dd')
+        if (dds.length > 0) {
+            dds.forEach(dd => {
+                const divForDd = document.createElement('div')
+                while (dd.firstChild) {
+                    divForDd.appendChild(dd.firstChild);
+                }
+                blockquote.appendChild(divForDd)
+            })
+        }
+
+        dl.insertAdjacentElement('afterend',blockquote);
         dl.remove()
     })
 }
@@ -201,8 +223,6 @@ function replaceP() {
     });
 }
 
-
-// span sig-name descname
 removeRelated()
 removeFooter();
 removeH1();
@@ -214,5 +234,6 @@ replaceRemarkToOriginPlace();
 removeCopyButton();
 addHeaderAnchorAndRemoveHeaderLink();
 replaceDlPy();
+replaceDlFieldList();
 replaceP();
 

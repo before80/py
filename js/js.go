@@ -10,3 +10,6 @@ var InSomeoneHeaderIntroPageGetAllIdentifierInfoJs string
 
 //go:embed InHeadersPageGetAllHeaderInfo.js
 var InHeadersPageGetAllHeaderInfoJs string
+
+//go:embed GetBarMenus.js
+var GetBarMenusJs string

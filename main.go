@@ -1,16 +1,15 @@
 package main
 
 import (
-	"cppreference/bs"
-	"cppreference/exc"
-	"cppreference/lg"
-	"cppreference/pg"
-	_ "embed"
 	"fmt"
 	"github.com/go-rod/rod"
 	"github.com/go-vgo/robotgo"
 	"github.com/tailscale/win"
 	"os"
+	"py/bs"
+	"py/exc"
+	"py/lg"
+	"py/pg"
 	"slices"
 	"sort"
 	"strconv"
@@ -36,6 +35,12 @@ func main() {
 	// 创建新页面
 	page = browser.MustPage()
 	browserHwnd = robotgo.GetHWND()
+	var barMenuInfos []pg.BarMenuInfo
+	barMenuInfos, err = pg.GetBarMenus(page, "https://docs.python.org/zh-cn/3.13/index.html")
+
+	for _, barMenuInfo := range barMenuInfos {
+		err = pg.InitBarMenu(barMenuInfo, page)
+	}
 
 	hn2HInfo, _ := pg.GetAllHeaderInfo(page)
 
