@@ -125,12 +125,14 @@ func InsertBarMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, page *
 
 	if barMenuInfo.Filename == "howto" {
 		result, err = page.Eval(js.GetSecondMenusForHowtoJs)
+		if err != nil {
+			return nil, fmt.Errorf("在网页%s中执行GetSecondMenusForHowtoJs遇到错误：%v", barMenuInfo.Url, err)
+		}
 	} else {
 		result, err = page.Eval(js.GetSecondMenusJs)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("在网页%s中执行GetSecondMenusJs遇到错误：%v", barMenuInfo.Url, err)
+		if err != nil {
+			return nil, fmt.Errorf("在网页%s中执行GetSecondMenusJs遇到错误：%v", barMenuInfo.Url, err)
+		}
 	}
 
 	// 将结果序列化为 JSON 字节
@@ -708,7 +710,7 @@ func InsertThirdMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, seco
 	wind.CtrlV(typoraHwnd)
 
 	wind.CtrlS(typoraHwnd)
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 	robotgo.CloseWindow()
 	time.Sleep(2 * time.Second)
 	_, err = myf.ReplaceMarkdownFileContent(uniqueMdFilepath)

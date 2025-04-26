@@ -63,6 +63,11 @@ func main() {
 		lg.InfoToFileAndStdOut(fmt.Sprintf("second处理二级菜单中 -> file=%s, menu=%s\n", barMenuInfo.Filename, barMenuInfo.MenuName))
 
 		for j, secondMenuInfo := range secondMenuInfos {
+			// cmdlinelibs 比较奇怪，先跳过
+			if slices.Contains([]string{"cmdlinelibs"}, secondMenuInfo.Filename) {
+				continue
+			}
+
 			thirdMenuInfos, err = pg.GetThirdLevelMenu(secondMenuInfo, page)
 			if err != nil {
 				lg.ErrorToFileAndStdOutWithSleepSecond(fmt.Sprintf("%v", err), 3)

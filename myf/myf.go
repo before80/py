@@ -112,6 +112,7 @@ func ReplaceMarkdownFileContent(filePath string) (bool, error) {
 		{regexp.MustCompile("```\\s*?//"), "```python\n//"},
 		{regexp.MustCompile("```\\s*?>>>"), "```python\n>>>"},
 		{regexp.MustCompile("```\\s*?\ndef"), "```python\ndef"},
+		{regexp.MustCompile("```\\s*?\nimport"), "```python\nimport"},
 		{regexp.MustCompile("```\\s*?\ncase"), "```python\ncase"},
 		{regexp.MustCompile("```\\s*?\nclass"), "```python\nclass"},
 		{regexp.MustCompile("```\\s*?\nPoint"), "```python\nPoint"},
