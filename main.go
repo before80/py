@@ -38,7 +38,7 @@ func main() {
 	var thirdMenuInfos []pg.MenuInfo
 	var fourthMenuInfos []pg.MenuInfo
 	for i, barMenuInfo := range barMenuInfos {
-		//if slices.Contains([]string{"tutorial", "whatsnew_3_13"}, barMenuInfo.Filename) {
+		//if !slices.Contains([]string{"glossary"}, barMenuInfo.Filename) {
 		//	continue
 		//}
 

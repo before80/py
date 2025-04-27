@@ -10,17 +10,17 @@ func getStr(menuInfos []pg.MenuInfo) string {
 	str := ""
 	curUrl := ""
 	for i, menuInfo := range menuInfos {
-		if i == 1 {
+		if i == 0 {
 			str += fmt.Sprintf(" barfile=%s barmenu=%s", menuInfo.Filename, menuInfo.MenuName)
 		}
 
-		if i == 2 {
+		if i == 1 {
 			str += fmt.Sprintf(" secondfile=%s secondmenu=%s", menuInfo.Filename, menuInfo.MenuName)
 		}
-		if i == 3 {
+		if i == 2 {
 			str += fmt.Sprintf(" thirdfile=%s thirdmenu=%s", menuInfo.Filename, menuInfo.MenuName)
 		}
-		if i == 4 {
+		if i == 3 {
 			str += fmt.Sprintf(" fourthfile=%s fourthmenu=%s", menuInfo.Filename, menuInfo.MenuName)
 		}
 		curUrl = menuInfo.Url

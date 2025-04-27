@@ -125,19 +125,21 @@ function addHeaderAnchorAndRemoveHeaderLink() {
 
     hs.forEach(h => {
         const headerLinkE = h.querySelector("a.headerlink")
-        const link = headerLinkE.href
-        //去除后面的 ¶
-        // const linkToTitle = h.textContent.replace(/¶+$/, '');
-        const anchor = link.split("#")[1].trim()
-        // h.setAttribute("data-href", link)
-        headerLinkE.remove()
-        // 判断下是否只有一个a标签了
-        if (h.children.length === 1 && h.children[0].tagName === 'A') {
-            const aTextContent = h.children[0].textContent
-            h.children[0].remove()
-            h.insertAdjacentText("beforeend", `${aTextContent}{#${anchor}}`)
-        } else {
-            h.insertAdjacentText("beforeend", `{#${anchor}}`)
+        if (headerLinkE) {
+            const link = headerLinkE.href
+            //去除后面的 ¶
+            // const linkToTitle = h.textContent.replace(/¶+$/, '');
+            const anchor = link.split("#")[1].trim()
+            // h.setAttribute("data-href", link)
+            headerLinkE.remove()
+            // 判断下是否只有一个a标签了
+            if (h.children.length === 1 && h.children[0].tagName === 'A') {
+                const aTextContent = h.children[0].textContent
+                h.children[0].remove()
+                h.insertAdjacentText("beforeend", `${aTextContent}{#${anchor}}`)
+            } else {
+                h.insertAdjacentText("beforeend", `{#${anchor}}`)
+            }
         }
     })
 }
