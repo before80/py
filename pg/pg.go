@@ -118,9 +118,9 @@ func InsertBarMenuPageData(browserHwnd win.HWND, barMenuInfo MenuInfo, page *rod
 		return nil, fmt.Errorf("在网页%s中执行json.Unmarshal遇到错误: %v", barMenuInfo.Url, err)
 	}
 
-	_, err = page.Eval(fmt.Sprintf(`() => { %s }`, js.GetBarMenuPageDataJs))
+	_, err = page.Eval(fmt.Sprintf(`() => { %s }`, js.GetDetailPageDataJs))
 	if err != nil {
-		return nil, fmt.Errorf("在网页%s中执行GetBarMenuPageDataJs遇到错误：%v", barMenuInfo.Url, err)
+		return nil, fmt.Errorf("在网页%s中执行GetDetailPageDataJs遇到错误：%v", barMenuInfo.Url, err)
 	}
 
 	err = dealUniqueMd(browserHwnd, barMenuInfo.Url, "barmenu")

@@ -9,6 +9,7 @@ import (
 	"py/lg"
 	"py/pg"
 	"py/plg"
+	"slices"
 	"strconv"
 )
 
@@ -38,9 +39,9 @@ func main() {
 	var thirdMenuInfos []pg.MenuInfo
 	var fourthMenuInfos []pg.MenuInfo
 	for i, barMenuInfo := range barMenuInfos {
-		//if !slices.Contains([]string{"glossary"}, barMenuInfo.Filename) {
-		//	continue
-		//}
+		if !slices.Contains([]string{"c-api"}, barMenuInfo.Filename) {
+			continue
+		}
 
 		plg.InfoToFileAndStdOut("bar", "正要处理", barMenuInfo)
 		err = pg.InitBarIndexMdFile(i, barMenuInfo)

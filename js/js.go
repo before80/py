@@ -5,9 +5,6 @@ import _ "embed"
 //go:embed GetBarMenus.js
 var GetBarMenusJs string
 
-//go:embed GetBarMenuPageData.js
-var GetBarMenuPageDataJs string
-
 //go:embed GetSecondMenus.js
 var GetSecondMenusJs string
 

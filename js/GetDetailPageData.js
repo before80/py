@@ -142,6 +142,102 @@ function addHeaderAnchorAndRemoveHeaderLink() {
     })
 }
 
+function setSectionDlLevel() {
+    const dlEs = document.querySelectorAll("section > dl.py,section > dl.c")
+    let sectionLevel = 2
+    let foundH = false
+    dlEs.forEach(dl => {
+        if (!foundH) {
+            let prevE = dl.previousElementSibling;
+            while (prevE && !foundH) {
+                if (['H1', 'H2', 'H3', 'H4', 'H5'].includes(prevE.tagName)) {
+                    foundH = true;
+                    sectionLevel = parseInt(prevE.tagName.replace("H", ""));
+                } else {
+                    prevE = prevE.previousElementSibling;
+                }
+            }
+        }
+    })
+
+    dlEs.forEach(dl => {
+        dl.setAttribute("data-h", `${sectionLevel + 1}`)
+        dl.querySelectorAll(":scope > dd > dl").forEach(dl1 => {
+            dl1.setAttribute("data-h", `${sectionLevel + 2}`)
+            dl1.querySelectorAll(":scope > dd > dl").forEach(dl2 => {
+                dl2.setAttribute("data-h", `${sectionLevel + 3}`)
+                dl2.querySelectorAll(":scope > dd > dl").forEach(dl3 => {
+                    dl3.setAttribute("data-h", `${sectionLevel + 4}`)
+                })
+            })
+        })
+    })
+}
+
+function replaceSectionDlDl(times) {
+    console.log("times=", times)
+    const dlEs = document.querySelectorAll("section > dl.py,section > dl.c")
+    dlEs.forEach(dl => {
+        const curMustSetToHLevel = dl.getAttribute('data-h')
+        console.log("curMustSetToHLevel=",curMustSetToHLevel)
+        const div = document.createElement('div');
+        // 处理dl下的dt
+        const dt = dl.querySelector(":scope > dt")
+        if (dt) {
+            const newH = document.createElement(`h${curMustSetToHLevel}`);
+            let anchor = ""
+            // 检查是否存在锚点
+            if (dt.querySelector(".headerlink")) {
+                const aE = dt.querySelector(".headerlink");
+                anchor = aE.href.trim().split("#")[1];
+                aE.remove(); // 移除原来的锚点链接
+            }
+
+            // while (dt.firstChild) {
+            //     newH.appendChild(dt.firstChild)
+            // }
+            //
+            // newH.insertBefore(document.createTextNode("`"), newH.firstChild)
+            // newH.appendChild(document.createTextNode((anchor ? `{#${anchor}}` : "") + "`"))
+
+            // 设置新标题的内容
+            const title = dt.textContent.trim();
+            newH.textContent = `\`${title}\`` + (anchor ? `{#${anchor}}` : "");
+            div.appendChild(newH);
+        }
+        // 处理dl下的dd
+        // 处理 dl 下的 dd
+        const dd = dl.querySelector(":scope > dd");
+        if (dd) {
+            // 将 dd 的子节点移动到新的 div 容器中
+            while (dd.firstChild) {
+                div.appendChild(dd.firstChild);
+            }
+        }
+
+        let child = div.firstChild;
+        while (child) {
+            const nextChild = child.nextSibling;
+            if (child.nodeType === Node.ELEMENT_NODE) {
+                dl.insertAdjacentElement('beforebegin', child);
+            }
+            child = nextChild;
+        }
+        dl.remove()
+    })
+}
+
+function repeatReplaceSectionDl() {
+    setSectionDlLevel()
+    replaceSectionDlDl(1)
+    replaceSectionDlDl(2)
+    replaceSectionDlDl(3)
+    // replaceSectionDlDl()
+    // replaceSectionDlDl()
+}
+
+
+
 // 修改并替换dl.py.method 或 dl.py.attribute或dl.c.function 或dl.c.var或dl.c.macro中的内容
 function replaceDlPyC() {
     const dlEs = document.querySelectorAll("dl.py,dl.c")
@@ -173,6 +269,12 @@ function replaceDlPyC() {
                 aE.remove(); // 移除原来的锚点链接
             }
 
+            // while (dt.firstChild) {
+            //     newH.appendChild(dt.firstChild)
+            // }
+
+            // newH.insertBefore(document.createTextNode("`"), newH.firstChild)
+            // newH.appendChild(document.createTextNode((anchor ? `{#${anchor}}` : "") + "`"))
             // 设置新标题的内容
             const title = dt.textContent.trim();
             newH.textContent = `\`${title}\`` + (anchor ? `{#${anchor}}` : "");
@@ -201,7 +303,7 @@ function replaceDlPyC() {
 
 function replaceDlGlossary() {
     const dls = document.querySelectorAll("dl.glossary")
-    if(dls.length > 0) {
+    if (dls.length > 0) {
         dls.forEach(dl => {
             const fragment = document.createDocumentFragment();
             let curMustSetToHLevel = 2
@@ -251,7 +353,7 @@ function replaceDlGlossary() {
     }
 }
 
-function replaceAsideTopic() {
+function replaceIntoBlockquote() {
     document.querySelectorAll("aside.topic").forEach(aside => {
         const blockquote = document.createElement('blockquote')
         while (aside.firstChild) {
@@ -259,6 +361,24 @@ function replaceAsideTopic() {
         }
         aside.insertAdjacentElement('afterend', blockquote);
         aside.remove()
+    })
+
+    document.querySelectorAll("div.deprecated").forEach(div => {
+        const blockquote = document.createElement('blockquote')
+        while (div.firstChild) {
+            blockquote.appendChild(div.firstChild);
+        }
+        div.insertAdjacentElement('afterend', blockquote);
+        div.remove()
+    })
+
+    document.querySelectorAll("div.deprecated-removed").forEach(div => {
+        const blockquote = document.createElement('blockquote')
+        while (div.firstChild) {
+            blockquote.appendChild(div.firstChild);
+        }
+        div.insertAdjacentElement('afterend', blockquote);
+        div.remove()
     })
 
 }
@@ -333,9 +453,9 @@ replaceRemarkToOriginPlace();
 removeCopyButton();
 replaceDlGlossary();
 addHeaderAnchorAndRemoveHeaderLink();
-replaceAsideTopic();
+replaceIntoBlockquote();
+repeatReplaceSectionDl();
 replaceDlPyC();
 replaceDlFieldList();
 replaceP();
 removeTocTree()
-
