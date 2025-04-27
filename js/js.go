@@ -17,11 +17,5 @@ var GetDetailPageDataJs string
 //go:embed GetThirdMenus.js
 var GetThirdMenusJs string
 
-//go:embed GetSecondMenuPageData.js
-var GetSecondMenuPageDataJs string
-
 //go:embed GetFourthMenus.js
 var GetFourthMenusJs string
-
-//go:embed GetThirdMenuPageData.js
-var GetThirdMenuPageDataJs string

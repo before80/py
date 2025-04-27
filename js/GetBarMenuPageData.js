@@ -30,10 +30,25 @@ function removeSphinxsidebar() {
 function replaceEm() {
     document.querySelectorAll("em").forEach(em => {
         if (!['DT', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(em.parentElement.tagName)) {
-            const span = document.createElement("span")
-            span.innerHTML = "\u0060" + em.innerHTML + "\u0060";
-            em.insertAdjacentElement("afterend", span)
-            em.remove()
+            if (em.classList.length === 0) {
+                const span = document.createElement("span")
+                span.innerHTML = "\u0060" + em.innerHTML + "\u0060";
+                em.insertAdjacentElement("afterend", span)
+                em.remove()
+            }
+        }
+    })
+}
+
+function replaceEmStableabi() {
+    document.querySelectorAll("em").forEach(em => {
+        if (!['DT', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(em.parentElement.tagName)) {
+            if (em.classList.contains("stableabi")) {
+                const pE = em.parentElement
+                const p = document.createElement("p")
+                p.appendChild(em)
+                pE.insertAdjacentElement("afterbegin", p)
+            }
         }
     })
 }
@@ -116,20 +131,27 @@ function addHeaderAnchorAndRemoveHeaderLink() {
         const anchor = link.split("#")[1].trim()
         // h.setAttribute("data-href", link)
         headerLinkE.remove()
-        h.insertAdjacentText("beforeend", `{#${anchor}}`)
+        // 判断下是否只有一个a标签了
+        if (h.children.length === 1 && h.children[0].tagName === 'A') {
+            const aTextContent = h.children[0].textContent
+            h.children[0].remove()
+            h.insertAdjacentText("beforeend", `${aTextContent}{#${anchor}}`)
+        } else {
+            h.insertAdjacentText("beforeend", `{#${anchor}}`)
+        }
     })
 }
 
-// 修改并替换dl.py.method 或 dl.py.attribute中的内容
-function replaceDlPy() {
-    const dlPyEs = document.querySelectorAll("dl.py")
-    dlPyEs.forEach(dl => {
+// 修改并替换dl.py.method 或 dl.py.attribute或dl.c.function 或dl.c.var或dl.c.macro中的内容
+function replaceDlPyC() {
+    const dlEs = document.querySelectorAll("dl.py,dl.c")
+    dlEs.forEach(dl => {
         //找到最近的标题是h3还是h4还是h5
         let prevE = dl.previousElementSibling;
         let foundH = false
         let curMustSetToHLevel = 4
         while (prevE && !foundH) {
-            if (['H2', 'H3', 'H4', 'H5'].includes(prevE.tagName)) {
+            if (['H1', 'H2', 'H3', 'H4', 'H5'].includes(prevE.tagName)) {
                 foundH = true;
                 curMustSetToHLevel = parseInt(prevE.tagName.replace("H", "")) + 1;
             } else {
@@ -177,6 +199,70 @@ function replaceDlPy() {
     })
 }
 
+function replaceDlGlossary() {
+    const dls = document.querySelectorAll("dl.glossary")
+    if(dls.length > 0) {
+        dls.forEach(dl => {
+            const fragment = document.createDocumentFragment();
+            let curMustSetToHLevel = 2
+            let prevE = dl.previousElementSibling;
+            let foundH = false
+            while (prevE && !foundH) {
+                if (['H1', 'H2', 'H3', 'H4', 'H5'].includes(prevE.tagName)) {
+                    foundH = true;
+                    curMustSetToHLevel = parseInt(prevE.tagName.replace("H", "")) + 1;
+                } else {
+                    prevE = prevE.previousElementSibling;
+                }
+            }
+
+            const dts = dl.querySelectorAll(":scope > dt")
+            if (dts.length > 0) {
+                dts.forEach(dt => {
+                    const newH = document.createElement(`h${curMustSetToHLevel}`);
+                    let anchor = ""
+                    // 检查是否存在锚点
+                    if (dt.querySelector(".headerlink")) {
+                        const aE = dt.querySelector(".headerlink");
+                        anchor = aE.href.trim().split("#")[1];
+                        aE.remove(); // 移除原来的锚点链接
+                    }
+                    // 设置新标题的内容
+                    const title = dt.textContent.trim();
+                    newH.textContent = `\`${title}\`` + (anchor ? `{#${anchor}}` : "");
+                    fragment.appendChild(newH)
+
+                    const dd = dt.nextElementSibling
+                    if (dd) {
+                        const divForDd = document.createElement("div");
+                        // 将 dd 的子节点移动到新的 div 容器中
+                        while (dd.firstChild) {
+                            divForDd.appendChild(dd.firstChild);
+                        }
+                        fragment.appendChild(divForDd);
+                    }
+                })
+            }
+            while (fragment.lastChild) {
+                dl.insertAdjacentElement('afterend', fragment.lastChild);
+            }
+            dl.remove()
+        })
+    }
+}
+
+function replaceAsideTopic() {
+    document.querySelectorAll("aside.topic").forEach(aside => {
+        const blockquote = document.createElement('blockquote')
+        while (aside.firstChild) {
+            blockquote.appendChild(aside.firstChild);
+        }
+        aside.insertAdjacentElement('afterend', blockquote);
+        aside.remove()
+    })
+
+}
+
 // 替换 dl.field-list.simple 中的内容
 function replaceDlFieldList() {
     document.querySelectorAll('dl.field-list.simple').forEach(dl => {
@@ -201,7 +287,7 @@ function replaceDlFieldList() {
             })
         }
 
-        dl.insertAdjacentElement('afterend',blockquote);
+        dl.insertAdjacentElement('afterend', blockquote);
         dl.remove()
     })
 }
@@ -240,13 +326,15 @@ removeFooter();
 removeH1();
 removeSphinxsidebar();
 replaceEm();
+replaceEmStableabi();
 // replaceCode();
 replaceDivIntoBlockQuote();
 replaceRemarkToOriginPlace();
 removeCopyButton();
+replaceDlGlossary();
 addHeaderAnchorAndRemoveHeaderLink();
-replaceDlPy();
+replaceAsideTopic();
+replaceDlPyC();
 replaceDlFieldList();
 replaceP();
-removeTocTree();
-
+removeTocTree()
