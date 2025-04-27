@@ -1,8 +1,11 @@
 () => {
+
     // // toctree-wrapper compound
-    const uls = document.querySelectorAll("ul.simple")
+
     let menuInfos = []
     let exists = {}
+    const uls = document.querySelectorAll("ul.simple")
+    const curPageUrl = "%s"
     if (uls.length > 0) {
         uls.forEach(ul => {
             ul.querySelectorAll(":scope > li").forEach(li => {
@@ -16,7 +19,7 @@
                     .replace(/[\.\/]/g, '_')
                 const noJhaoUrl = url.split("#")[0]
                 console.log("noJhaoUrl=", noJhaoUrl)
-                if (!exists[noJhaoUrl]) {
+                if (noJhaoUrl !== curPageUrl && !exists[noJhaoUrl]) {
                     menuInfos.push({
                         menu_name: menu_name,
                         filename: filename,

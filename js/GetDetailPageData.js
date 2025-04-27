@@ -223,6 +223,18 @@ function replaceP() {
     });
 }
 
+function removeTocTree() {
+    const tocTree = document.querySelector("div.toctree-wrapper.compound")
+    if (tocTree) {
+        tocTree.remove()
+    }
+
+    const navContents = document.querySelector("nav.contents")
+    if (navContents) {
+        navContents.remove()
+    }
+}
+
 removeRelated()
 removeFooter();
 removeH1();
@@ -236,4 +248,5 @@ addHeaderAnchorAndRemoveHeaderLink();
 replaceDlPy();
 replaceDlFieldList();
 replaceP();
+removeTocTree()
 

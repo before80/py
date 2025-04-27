@@ -228,6 +228,11 @@ function removeTocTree() {
     if (tocTree) {
         tocTree.remove()
     }
+
+    const navContents = document.querySelector("nav.contents")
+    if (navContents) {
+        navContents.remove()
+    }
 }
 
 removeRelated()

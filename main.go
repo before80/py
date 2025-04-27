@@ -63,8 +63,8 @@ func main() {
 		lg.InfoToFileAndStdOut(fmt.Sprintf("second处理二级菜单中 -> file=%s, menu=%s\n", barMenuInfo.Filename, barMenuInfo.MenuName))
 
 		for j, secondMenuInfo := range secondMenuInfos {
-			// cmdlinelibs 比较奇怪，先跳过
-			if slices.Contains([]string{"cmdlinelibs"}, secondMenuInfo.Filename) {
+			if barMenuInfo.Filename == "library" &&
+				slices.Contains([]string{"constants", "allos", "binary", "crypto", "datatypes", "fileformats", "filesys", "functional", "numeric", "persistence", "text", "constants", "exceptions", "functions", "intro"}, secondMenuInfo.Filename) {
 				continue
 			}
 

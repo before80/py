@@ -3,7 +3,6 @@ package cfg
 import (
 	"fmt"
 	"github.com/spf13/viper"
-	"slices"
 	"time"
 )
 
@@ -11,16 +10,20 @@ var canUseUniqueKeySlice = []string{"A"}
 
 // DefaultConfig 定义整体 JSON 文件的结构
 type DefaultConfig struct {
-	UniqueKey        string `mapstructure:"unique_key"`
-	UseProxy         int    `mapstructure:"use_proxy"`
-	ProxyScheme      string `mapstructure:"proxy_scheme"`
-	ProxyHost        string `mapstructure:"proxy_host"`
-	ProxyPort        int    `mapstructure:"proxy_port"`
-	ProxyUsername    string `mapstructure:"proxy_username"`
-	ProxyPassword    string `mapstructure:"proxy_password"`
-	UniqueMdFilepath string `mapstructure:"unique_md_filepath"`
-	BrowserWidth     int    `mapstructure:"browser_width"`
-	BrowserHeight    int    `mapstructure:"browser_height"`
+	WaitOpenNextPageSeconds       int    `mapstructure:"wait_open_next_page_seconds"`
+	WaitTyporaSaveSeconds         int    `mapstructure:"wait_typora_save_seconds"`
+	WaitTyporaCloseSeconds        int    `mapstructure:"wait_typora_close_seconds"`
+	WaitTyporaOpenSeconds         int    `mapstructure:"wait_typora_open_seconds"`
+	WaitTyporaCopiedToSaveSeconds int    `mapstructure:"wait_typora_copied_to_save_seconds"`
+	UseProxy                      int    `mapstructure:"use_proxy"`
+	ProxyScheme                   string `mapstructure:"proxy_scheme"`
+	ProxyHost                     string `mapstructure:"proxy_host"`
+	ProxyPort                     int    `mapstructure:"proxy_port"`
+	ProxyUsername                 string `mapstructure:"proxy_username"`
+	ProxyPassword                 string `mapstructure:"proxy_password"`
+	UniqueMdFilepath              string `mapstructure:"unique_md_filepath"`
+	BrowserWidth                  int    `mapstructure:"browser_width"`
+	BrowserHeight                 int    `mapstructure:"browser_height"`
 }
 
 var Default DefaultConfig
@@ -56,9 +59,9 @@ func getDefaultConfigInfo() (defaultConfig DefaultConfig, err error) {
 	return defaultConfig, err
 }
 
-func JudgeUniqueKeyIsOk() bool {
-	return slices.Contains(canUseUniqueKeySlice, Default.UniqueKey)
-}
+//func JudgeUniqueKeyIsOk() bool {
+//	return slices.Contains(canUseUniqueKeySlice, Default.UniqueKey)
+//}
 
 var noAuthStartTime time.Time
 var noAuthPlanEndTime time.Time

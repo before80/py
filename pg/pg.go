@@ -123,16 +123,9 @@ func InsertBarMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, page *
 	// 判断是否还有第二级菜单
 	var result *proto.RuntimeRemoteObject
 
-	if barMenuInfo.Filename == "howto" {
-		result, err = page.Eval(js.GetSecondMenusForHowtoJs)
-		if err != nil {
-			return nil, fmt.Errorf("在网页%s中执行GetSecondMenusForHowtoJs遇到错误：%v", barMenuInfo.Url, err)
-		}
-	} else {
-		result, err = page.Eval(js.GetSecondMenusJs)
-		if err != nil {
-			return nil, fmt.Errorf("在网页%s中执行GetSecondMenusJs遇到错误：%v", barMenuInfo.Url, err)
-		}
+	result, err = page.Eval(fmt.Sprintf(js.GetSecondMenusJs, barMenuInfo.Url))
+	if err != nil {
+		return nil, fmt.Errorf("在网页%s中执行GetSecondMenusJs遇到错误：%v", barMenuInfo.Url, err)
 	}
 
 	// 将结果序列化为 JSON 字节
@@ -170,7 +163,7 @@ func InsertBarMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, page *
 	}
 
 	// 适当延时保证能打开 typora
-	time.Sleep(3 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaOpenSeconds) * time.Second)
 
 	var typoraHwnd win.HWND
 	typoraWindowName := fmt.Sprintf("%s - Typora", mdFilename)
@@ -182,11 +175,11 @@ func InsertBarMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, page *
 	wind.SelectAllAndCtrlC(browserHwnd)
 	wind.SelectAllAndDelete(typoraHwnd)
 	wind.CtrlV(typoraHwnd)
-
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCopiedToSaveSeconds) * time.Second)
 	wind.CtrlS(typoraHwnd)
-	time.Sleep(1 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaSaveSeconds) * time.Second)
 	robotgo.CloseWindow()
-	time.Sleep(2 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCloseSeconds) * time.Second)
 	_, err = myf.ReplaceMarkdownFileContent(uniqueMdFilepath)
 	if err != nil {
 		return nil, fmt.Errorf("在处理barmenu=%s时，替换出现错误：%v", barMenuInfo.Url, err)
@@ -279,7 +272,7 @@ func GetThirdLevelMenu(menuInfo MenuInfo, page *rod.Page) (thirdMenuInfos []Menu
 
 	// 判断是否还有第三级菜单
 	var result *proto.RuntimeRemoteObject
-	result, err = page.Eval(js.GetThirdMenusJs)
+	result, err = page.Eval(fmt.Sprintf(js.GetThirdMenusJs, menuInfo.Url))
 
 	if err != nil {
 		return nil, fmt.Errorf("在网页%s中执行GetThirdMenusJs遇到错误：%v", menuInfo.Url, err)
@@ -310,7 +303,7 @@ func GetFourthLevelMenu(thirdMenuInfo MenuInfo, page *rod.Page) (fourthMenuInfos
 
 	// 判断是否还有第三级菜单
 	var result *proto.RuntimeRemoteObject
-	result, err = page.Eval(js.GetFourthMenusJs)
+	result, err = page.Eval(fmt.Sprintf(js.GetFourthMenusJs, thirdMenuInfo.Url))
 
 	if err != nil {
 		return nil, fmt.Errorf("在网页%s中执行GetFourthMenusJs遇到错误：%v", thirdMenuInfo.Url, err)
@@ -397,7 +390,7 @@ func InsertSecondMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, sec
 	}
 
 	// 适当延时保证能打开 typora
-	time.Sleep(3 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaOpenSeconds) * time.Second)
 
 	var typoraHwnd win.HWND
 	typoraWindowName := fmt.Sprintf("%s - Typora", mdFilename)
@@ -409,11 +402,11 @@ func InsertSecondMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, sec
 	wind.SelectAllAndCtrlC(browserHwnd)
 	wind.SelectAllAndDelete(typoraHwnd)
 	wind.CtrlV(typoraHwnd)
-
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCopiedToSaveSeconds) * time.Second)
 	wind.CtrlS(typoraHwnd)
-	time.Sleep(1 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaSaveSeconds) * time.Second)
 	robotgo.CloseWindow()
-	time.Sleep(2 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCloseSeconds) * time.Second)
 	_, err = myf.ReplaceMarkdownFileContent(uniqueMdFilepath)
 	if err != nil {
 		return fmt.Errorf("在处理second=%s时，替换出现错误：%v", secondMenuInfo.Url, err)
@@ -502,7 +495,7 @@ func InsertDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, menuInf
 	}
 
 	// 适当延时保证能打开 typora
-	time.Sleep(3 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaOpenSeconds) * time.Second)
 
 	var typoraHwnd win.HWND
 	typoraWindowName := fmt.Sprintf("%s - Typora", mdFilename)
@@ -514,10 +507,11 @@ func InsertDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, menuInf
 	wind.SelectAllAndCtrlC(browserHwnd)
 	wind.SelectAllAndDelete(typoraHwnd)
 	wind.CtrlV(typoraHwnd)
-
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCopiedToSaveSeconds) * time.Second)
 	wind.CtrlS(typoraHwnd)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaSaveSeconds) * time.Second)
 	robotgo.CloseWindow()
-	time.Sleep(1 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCloseSeconds) * time.Second)
 	_, err = myf.ReplaceMarkdownFileContent(uniqueMdFilepath)
 	if err != nil {
 		return fmt.Errorf("在处理detailPage=%s时，替换出现错误：%v", barMenuInfo.Url, err)
@@ -647,7 +641,7 @@ func InsertThirdDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, se
 	}
 
 	// 适当延时保证能打开 typora
-	time.Sleep(3 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaOpenSeconds) * time.Second)
 
 	var typoraHwnd win.HWND
 	typoraWindowName := fmt.Sprintf("%s - Typora", mdFilename)
@@ -659,10 +653,11 @@ func InsertThirdDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, se
 	wind.SelectAllAndCtrlC(browserHwnd)
 	wind.SelectAllAndDelete(typoraHwnd)
 	wind.CtrlV(typoraHwnd)
-
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCopiedToSaveSeconds) * time.Second)
 	wind.CtrlS(typoraHwnd)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaSaveSeconds) * time.Second)
 	robotgo.CloseWindow()
-	time.Sleep(1 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCloseSeconds) * time.Second)
 	_, err = myf.ReplaceMarkdownFileContent(uniqueMdFilepath)
 	if err != nil {
 		return fmt.Errorf("在处理thirdDetailPage=%s时，替换出现错误：%v", thirdMenuInfo.Url, err)
@@ -696,7 +691,7 @@ func InsertThirdMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, seco
 	}
 
 	// 适当延时保证能打开 typora
-	time.Sleep(3 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaOpenSeconds) * time.Second)
 
 	var typoraHwnd win.HWND
 	typoraWindowName := fmt.Sprintf("%s - Typora", mdFilename)
@@ -708,11 +703,11 @@ func InsertThirdMenuPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, seco
 	wind.SelectAllAndCtrlC(browserHwnd)
 	wind.SelectAllAndDelete(typoraHwnd)
 	wind.CtrlV(typoraHwnd)
-
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCopiedToSaveSeconds) * time.Second)
 	wind.CtrlS(typoraHwnd)
-	time.Sleep(2 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaSaveSeconds) * time.Second)
 	robotgo.CloseWindow()
-	time.Sleep(2 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCloseSeconds) * time.Second)
 	_, err = myf.ReplaceMarkdownFileContent(uniqueMdFilepath)
 	if err != nil {
 		return fmt.Errorf("在处理third=%s时，替换出现错误：%v", thirdMenuInfo.Url, err)
@@ -799,7 +794,7 @@ func InsertFourthDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, s
 	}
 
 	// 适当延时保证能打开 typora
-	time.Sleep(3 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaOpenSeconds) * time.Second)
 
 	var typoraHwnd win.HWND
 	typoraWindowName := fmt.Sprintf("%s - Typora", mdFilename)
@@ -811,10 +806,11 @@ func InsertFourthDetailPageData(browserHwnd win.HWND, barMenuInfo BarMenuInfo, s
 	wind.SelectAllAndCtrlC(browserHwnd)
 	wind.SelectAllAndDelete(typoraHwnd)
 	wind.CtrlV(typoraHwnd)
-
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCopiedToSaveSeconds) * time.Second)
 	wind.CtrlS(typoraHwnd)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaSaveSeconds) * time.Second)
 	robotgo.CloseWindow()
-	time.Sleep(1 * time.Second)
+	time.Sleep(time.Duration(cfg.Default.WaitTyporaCloseSeconds) * time.Second)
 	_, err = myf.ReplaceMarkdownFileContent(uniqueMdFilepath)
 	if err != nil {
 		return fmt.Errorf("在处理fourthDetailPage=%s时，替换出现错误：%v", fourthMenuInfo.Url, err)

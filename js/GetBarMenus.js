@@ -1,10 +1,10 @@
 () => {
-    const url = "%s"
-    let baseUrl = url.replace(/\/index\.html$/, '');
+    const curPageUrl = "%s"
+    let baseUrl = curPageUrl.replace(/\/index\.html$/, '');
     baseUrl = baseUrl.replace(/\/$/, '');
     baseUrl = baseUrl + '/'
     let menuInfos = []
-
+    let exists = {}
     document.querySelectorAll("table.contentstable").forEach((t, i) => {
         const ps = t.querySelectorAll("p")
         if (ps.length > 0) {
@@ -16,12 +16,16 @@
                     .replace(/\/index\.html$/, '')
                     .replace(/\.html$/, '')
                     .replace(/[\.\/]/g, '_')
-                if (i === 0 || (i > 0 && ["术语对照表", "Python 的历史与许可证"].includes(menu_name))) {
-                    menuInfos.push({
-                        menu_name: menu_name,
-                        filename: filename,
-                        url: url,
-                    })
+
+                if (!exists[url]) {
+                    if (i === 0 || (i > 0 && ["术语对照表", "Python 的历史与许可证"].includes(menu_name))) {
+                        menuInfos.push({
+                            menu_name: menu_name,
+                            filename: filename,
+                            url: url,
+                        })
+                        exists[url] = true
+                    }
                 }
             })
         }
