@@ -58,112 +58,34 @@ type MenuInfo struct {
 	Url      string `json:"url"`
 }
 
-func InitBarIndexMdFile(index int, menuInfo MenuInfo) (err error) {
-	dir := filepath.Join(contants.OutputFolderName, menuInfo.Filename)
-	return preInitMdFile(index, true, dir, menuInfo)
+func InitBarIndexMdFile(index int, barMenuInfo MenuInfo) (err error) {
+	dir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename)
+	return preInitMdFile(index, true, true, dir, barMenuInfo)
 }
 
 func InitSecondIndexMdFile(index int, barMenuInfo MenuInfo, secondMenuInfo MenuInfo) (err error) {
-	dir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename)
-	return preInitMdFile(index, false, dir, secondMenuInfo)
+	dir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename)
+	return preInitMdFile(index, false, true, dir, secondMenuInfo)
 }
 
 func InitThirdIndexMdFile(index int, barMenuInfo MenuInfo, secondMenuInfo MenuInfo, thirdMenuInfo MenuInfo) (err error) {
-	dir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename)
-	return preInitMdFile(index, false, dir, thirdMenuInfo)
+	dir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename, thirdMenuInfo.Filename)
+	return preInitMdFile(index, false, true, dir, thirdMenuInfo)
 }
 
-func InitSecondDetailPageMdFile(index int, barMenuInfo MenuInfo, menuInfo MenuInfo) (err error) {
-	// 保证目录已经存在
-	folderDir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename)
-	err = os.MkdirAll(folderDir, 0777)
-	if err != nil {
-		return fmt.Errorf("无法创建%s目录：%v\n", folderDir, err)
-	}
-
-	mdFp := filepath.Join(folderDir, menuInfo.Filename+".md")
-	var mdF *os.File
-	_, err1 := os.Stat(mdFp)
-
-	// 当文件不存在的情况下，新建文件并初始化该文件
-	if err1 != nil && errors.Is(err1, fs.ErrNotExist) {
-		//fmt.Println("err=", err1)
-		mdF, err = os.OpenFile(mdFp, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
-		if err != nil {
-			return fmt.Errorf("创建文件 %s 时出错: %w", mdFp, err)
-		}
-		defer mdF.Close()
-		date := time.Now().Format(time.RFC3339)
-		_, err = mdF.WriteString(fmt.Sprintf(`+++
-title = "%s"
-date = %s
-weight = %d
-type="docs"
-description = "%s"
-isCJKLanguage = true
-draft = false
-
-+++
-
-> 原文：[%s](%s)
->
-> 收录时间：%s
-`, menuInfo.MenuName, date, index*10, "", menuInfo.Url, menuInfo.Url, fmt.Sprintf("`%s`", date)))
-
-		if err != nil {
-			return fmt.Errorf("初始化%s文件时出错: %v", mdFp, err)
-		}
-	}
-	return nil
+func InitSecondDetailPageMdFile(index int, barMenuInfo MenuInfo, secondMenuInfo MenuInfo) (err error) {
+	dir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename)
+	return preInitMdFile(index, false, false, dir, secondMenuInfo)
 }
 
 func InitThirdDetailPageMdFile(index int, barMenuInfo MenuInfo, secondMenuInfo MenuInfo, thirdMenuInfo MenuInfo) (err error) {
-	// 保证目录已经存在
-	folderDir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename)
-	err = os.MkdirAll(folderDir, 0777)
-	if err != nil {
-		return fmt.Errorf("无法创建%s目录：%v\n", folderDir, err)
-	}
-
-	mdFp := filepath.Join(folderDir, thirdMenuInfo.Filename+".md")
-	var mdF *os.File
-	_, err1 := os.Stat(mdFp)
-
-	// 当文件不存在的情况下，新建文件并初始化该文件
-	if err1 != nil && errors.Is(err1, fs.ErrNotExist) {
-		//fmt.Println("err=", err1)
-		mdF, err = os.OpenFile(mdFp, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
-		if err != nil {
-			return fmt.Errorf("创建文件 %s 时出错: %w", mdFp, err)
-		}
-		defer mdF.Close()
-		date := time.Now().Format(time.RFC3339)
-		_, err = mdF.WriteString(fmt.Sprintf(`+++
-title = "%s"
-date = %s
-weight = %d
-type="docs"
-description = "%s"
-isCJKLanguage = true
-draft = false
-
-+++
-
-> 原文：[%s](%s)
->
-> 收录时间：%s
-`, thirdMenuInfo.MenuName, date, index*10, "", thirdMenuInfo.Url, thirdMenuInfo.Url, fmt.Sprintf("`%s`", date)))
-
-		if err != nil {
-			return fmt.Errorf("初始化%s文件时出错: %v", mdFp, err)
-		}
-	}
-	return nil
+	dir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename)
+	return preInitMdFile(index, false, false, dir, thirdMenuInfo)
 }
 
 func InitFourthDetailPageMdFile(index int, barMenuInfo MenuInfo, secondMenuInfo MenuInfo, thirdMenuInfo MenuInfo, fourthMenuInfo MenuInfo) (err error) {
 	dir := filepath.Join(contants.OutputFolderName, barMenuInfo.Filename, secondMenuInfo.Filename, thirdMenuInfo.Filename)
-	return preInitMdFile(index, false, dir, fourthMenuInfo)
+	return preInitMdFile(index, false, false, dir, fourthMenuInfo)
 }
 
 func InsertBarMenuPageData(browserHwnd win.HWND, barMenuInfo MenuInfo, page *rod.Page) (secondMenus []MenuInfo, err error) {
@@ -474,13 +396,13 @@ func evalJsGetSubMenuInfos(page *rod.Page, jsName, js, pageUrl string) (subMenuI
 	return
 }
 
-func preInitMdFile(index int, isBar bool, dir string, menuInfo MenuInfo) (err error) {
+func preInitMdFile(index int, isBar, useUnderlineIndexMd bool, dir string, menuInfo MenuInfo) (err error) {
 	err = os.MkdirAll(dir, 0777)
 	if err != nil {
 		return fmt.Errorf("无法创建%s目录：%v\n", dir, err)
 	}
 	var filename string
-	if isBar {
+	if useUnderlineIndexMd {
 		filename = "_index.md"
 	} else {
 		filename = menuInfo.Filename + ".md"
